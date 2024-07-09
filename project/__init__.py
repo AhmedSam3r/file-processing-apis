@@ -3,20 +3,24 @@ from project.files import file_bp
 from project.settings import UPLOAD_FOLDER
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-
+from project.settings import POSTGRES_URI
 
 app = Flask(__name__)
 print("---------- init.py file ----------")
 
 # postgresql://username:password@host:port/database_name
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:postgres@localhost/file_management'
+app.config['SQLALCHEMY_DATABASE_URI'] = POSTGRES_URI
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+
 
 # Configure app to save files there
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024    # 50 Mb limit
 
+
+# import celery
+from project.celery import celery
 
 # Invoking routes to be identified in the flask routing system
 from project.routes import *

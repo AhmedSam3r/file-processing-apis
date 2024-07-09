@@ -9,9 +9,20 @@ class File(db.Model):
     file_path = db.Column(db.Text, nullable=False)
     number_of_lines = db.Column(db.Integer, nullable=False)
     file_size = db.Column(db.Float, nullable=False)
+    alias = db.Column(db.Text)
 
     def __repr__(self):
         return f"<File {self.file_name}>"
+
+    def to_dict(self):
+        return {
+            'file_id': self.id,
+            'name': self.file_name,
+            'alias': self.alias,
+            'size': self.file_size,
+            'lines_count': self.number_of_lines,
+
+        }
 
 
 class FileMetadata(db.Model):
@@ -29,5 +40,4 @@ class FileMetadata(db.Model):
             'index': self.line_number,
             'size': self.line_size,
             'content': self.line_content,
-
         }

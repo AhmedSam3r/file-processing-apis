@@ -35,9 +35,11 @@ This project provides a web service for file management, including functionaliti
 
 - Python 3.10+
 - Virtual Environment (recommended)
-- PostgreSQL (or any SQL database supported by SQLAlchemy)
+- PostgreSQL 14 & up (or any SQL database supported by SQLAlchemy) 
 - Flask 3.0
 - Flask-Migrate
+- Redis
+- Celery 5.0
 
 ### Installation
 
@@ -78,6 +80,17 @@ This project provides a web service for file management, including functionaliti
    flask db migrate -m "Initial migration" --directory project/migrations
    flask db upgrade --directory project/migrations
    ```
+   #### To create empty migration file
+   `flask db revision --directory project/migrations --empty -m "create_empty_migration"`
+
+6. **Code quality check**
+   #### After installing the flake8, you can run in the main directory the following
+   ```flake8 --ignore E501`` 
+
+7. **Celery**
+
+   After Installing celery, open a new terminal and run it through `celery -A project.celery worker --loglevel=info` in the main directory
+
 
 ### Running the Application
 

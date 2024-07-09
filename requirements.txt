@@ -5,7 +5,10 @@ itsdangerous==2.2.0
 Jinja2==3.1.4
 MarkupSafe==2.1.5
 Werkzeug==3.0.3
-python-dotenv 
-psycopg2==2.9.9
+psycopg2-binary==2.9.9
 Flask-SQLAlchemy==3.1.1
 Flask-Migrate==4.0.7
+load_dotenv==0.1.0
+flake8==7.1.0
+redis==5.0.7
+celery==5.4.0

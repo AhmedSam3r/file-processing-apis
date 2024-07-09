@@ -1,8 +1,13 @@
-from project.settings import UPLOAD_FOLDER, ALLOWED_EXTENSIONS
+from project.settings import (
+    UPLOAD_FOLDER, ALLOWED_EXTENSIONS,
+    MIN_FILE_SIZE, MAX_FILE_SIZE
+)
 import os
 from typing import IO, Union
 import random
 from datetime import datetime
+import string
+import uuid
 
 
 def validate_directory_path(path: str) -> None:
@@ -12,13 +17,14 @@ def validate_directory_path(path: str) -> None:
 
 
 def upload_file(file_obj: IO, file_name: str) -> bool:
+    file_path = f"{UPLOAD_FOLDER}/{file_name}"
     try:
         validate_directory_path(UPLOAD_FOLDER)
-        file_obj.save(f"{UPLOAD_FOLDER}/{file_name}")
-        return True, UPLOAD_FOLDER
+        file_obj.save(file_path)
+        return True, file_path
     except Exception as ex:
-        print("LOG Err = ", ex)
-        return False, UPLOAD_FOLDER
+        print("upload_file error = ", ex)
+        return False, file_path
 
 
 def get_blob_size(blob: IO) -> float:
@@ -30,8 +36,7 @@ def valid_blob_size(blob: IO) -> bool:
     try:
         blob_length = get_blob_size(blob)
         print("blob length ", blob_length)
-        MAX_SIZE = 50 * 1024 * 1024  # 50 MB
-        if blob_length > MAX_SIZE:
+        if blob_length > MAX_FILE_SIZE and blob_length < MIN_FILE_SIZE:
             return False, blob_length
         # seek back to start position of stream,
         # otherwise save() will write a 0 byte blob
@@ -89,7 +94,7 @@ def read_in_chunks(id: str, chunk_size: int = 1024):
     file_object.close()
 
 
-def get_random_line(id: str, max_count, reverse=False) -> str:
+def get_random_line(name: str, max_count, reverse=False) -> str:
     result = {
         "line_number": -1,
         "line_text": ""
@@ -97,11 +102,9 @@ def get_random_line(id: str, max_count, reverse=False) -> str:
     try:
         text = ""
         random.seed(int(datetime.now().timestamp()))
-        # TODO make it the max file size
-        n = 100
         line_number = random.randint(0, max_count)
         # print("line_number=", line_number)
-        blob_generator = read_in_chunks(id)
+        blob_generator = read_in_chunks(name)
         line_by_line = ""
         count = 0
         for count, piece in enumerate(blob_generator):
@@ -181,18 +184,40 @@ def get_most_longest_x_lines(id, lines_count=20, reverse=True):
         return final_result_list
     except Exception as ex:
         print("get_most_longest_x_lines() err", ex)
+        return []
 
 
 def allowed_file(filename):
+    file_ext = '.' in filename and filename.rsplit('.', 1)[1].lower()
     return (
-        '.' in filename and filename.rsplit('.', 1)[1].lower() 
-        in ALLOWED_EXTENSIONS
+        file_ext in ALLOWED_EXTENSIONS,
+        file_ext
     )
 
 
-def count_lines_number(path, file_name):
-    file_path = os.path.join(path + '/' + file_name)
-    with open(file_path, 'r') as f:
-        number_of_lines = sum(1 for line in f)
+def count_lines_number(file_path):
+    try:
+        with open(file_path, 'r') as f:
+            number_of_lines = sum(1 for line in f)
+        return number_of_lines
+    except FileNotFoundError:
+        print(f"File not found: {file_path}")
+        return -1  # Or handle the error as needed
 
-    return number_of_lines
+
+def generate_unique_string(length=8):
+    '''
+    Total permutations=(number of possible characters) length of the string
+    In the case of generating an 8-character string using both letters (uppercase and lowercase) and digits, there are 62 possible characters (26 lowercase letters + 26 uppercase letters + 10 digits).
+    So, for an 8-character string, the total number of permutations is:
+    62^8 so over 218 trillion possible unique
+    '''
+    # Define the characters to choose from: digits and ASCII letters
+    characters = string.ascii_letters + string.digits
+    # Generate a random string of the specified length
+    unique_string = ''.join(random.choices(characters, k=length))
+    return unique_string
+
+
+def generate_uuid_v1():
+    return str(uuid.uuid1())

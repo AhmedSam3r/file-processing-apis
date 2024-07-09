@@ -1,0 +1,79 @@
+version: "3.8"
+
+services:    
+  db:
+    image: "postgres:16-alpine"
+    restart: always
+    environment:
+      POSTGRES_DB: file_management
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_PORT: 5432
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+    networks:
+      file_network:
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -q -d file_management -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+
+  db_migrations:
+    build:
+      context: .
+    environment:
+      FLASK_APP: run.py
+    networks:
+      file_network:
+    depends_on:
+      db: 
+        condition: service_healthy
+    command: flask db upgrade --directory project/migrations
+
+  redis:
+    image: "redis:alpine"
+    ports:
+      - "6382:6379"
+    networks:
+      file_network:
+    
+  
+  celery_worker:
+    build: .
+    command: celery -A project.celery worker --loglevel=info
+    depends_on:
+      - redis
+    networks:
+      - file_network
+    volumes:
+      # - .:/src
+      - file_volume:/src/project/static/files
+
+  file_app:
+    build: 
+      context: .
+    command: python3 run.py
+    ports:
+      - "5000:5000"
+    expose:
+      - 5000
+    networks:
+      - file_network
+    volumes:
+      - .:/src
+      # - file_volume:/src/project/static/files
+
+    depends_on:
+      - db_migrations
+      - redis
+    links:
+      - db
+
+networks:
+  file_network:
+
+volumes:
+  file_volume:
+  
